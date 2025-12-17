@@ -1,0 +1,624 @@
+<template>
+   <div class="main-container">
+      <div class="title">
+         <h2>Puntaje: {{ puntaje }}</h2>
+         <h2>Intentos: {{ intentos }}</h2>
+      </div>
+      <div class="pokemons-container">
+         <PokemonSquare 
+            v-for="(pokemon, index) in grid" :key="index"
+            :imagen="pokemon.img"
+            :name="pokemon.name"
+         />
+      </div>
+      <div class="btn-container">
+         <button @click="jugar">JUGAR</button>
+      </div>
+      <GameMessage 
+         :mensaje="mensaje"
+         :color="color"
+      />
+   </div>
+</template>
+<script>
+import { getPokemonData } from '../clients/PokeApiClient';
+import GameMessage from '../components/GameMessage.vue';
+import PokemonSquare from '../components/PokemonSquare.vue';
+
+export default {
+   components: { PokemonSquare, GameMessage },
+   data() {
+      return {
+         pokemons: [],
+         grid: [{}, {}, {}],
+         puntaje: 0,
+         intentos: 0,
+         mensaje: '',
+         color: '',
+         nombre: ''
+      }
+   },
+   methods: {
+      jugar() {
+         this.intentos++;
+         console.log(this.pokemons);
+         const n1 = this.pokemons[Math.floor(Math.random() * 4)];
+         const n2 = this.pokemons[Math.floor(Math.random() * 4)];
+         const n3 = this.pokemons[Math.floor(Math.random() * 4)];
+
+         this.grid = [n1, n2, n3];
+         this.calcularPuntaje(n1, n2, n3);
+         this.mostrarMensaje();
+      },
+      calcularPuntaje(p1, p2, p3) {
+         if (p1.id === p2.id && p2.id === p3.id) {
+            this.puntaje += 5;
+         } else if (p1.id === p2.id || p1.id === p3.id || p2.id === p3.id) {
+            this.puntaje += 2;
+         }
+      },
+      mostrarMensaje() {
+         if (this.intentos === 5 && this.puntaje < 10) {
+            this.mensaje = "Ha utilizado sus 5 Intentos El juego a terminado, intente otra vez";
+            this.color = "red";
+         } else if (this.puntaje >= 10 && this.intentos <= 5) {
+            this.mensaje = `Puntaje: ${this.puntaje} Felicitaciones has ganado $10.000,00`;
+            this.color = "blue";
+         }
+      }
+   },
+   async mounted() {
+      this.pokemons = await getPokemonData();
+   },
+}
+</script>
+<style scoped>
+   .main-container {
+      text-align: center;
+      margin: 30px;
+   }
+   .pokemons-container {
+      display: flex;
+      flex-direction: row;
+      text-align: center;
+      justify-content: center;
+   }
+   .title {
+      display: flex;
+      justify-content: space-around;
+   }
+   button {
+      border: 2px solid black;
+      padding: 15px 30px;
+      cursor: pointer;
+      font-weight: bold;
+
+   }
+</style>
+<template>
+   <div class="square-container">
+      <div>
+         <img :src="imagenSrc" alt="Pokemon"></img>
+      </div>
+      <p> {{ nameSrc }}</p>
+   </div>
+</template>
+
+<script>
+export default {
+   props: ['imagen', 'name'],
+   computed: {
+      imagenSrc() {
+         return this.imagen ? this.imagen : 'https://placehold.co/200x200/000000/000000.png'
+      },
+      nameSrc() {
+         return this.name ? this.name : 'XXXXXXXXXXXXX'
+      }
+   }
+}
+</script>
+
+<style scoped>
+   .square-container {
+      display: flex;
+      flex-direction: column;
+      margin: 30px;
+   }
+   img {
+      width: 150px;
+      height: 150px;
+   }
+</style>
+<template>
+   <div class="message-container">
+      <p v-if="mensaje" 
+         :style="{color: color, border: '1px solid black'}">
+         {{mensaje}}
+      </p>
+   </div>
+</template>
+
+<script>
+export default {
+   props: ['mensaje', 'color']
+}
+</script>
+
+<style>
+   .message-container, p {
+      margin: 10px;
+      padding: 10px;
+      font-weight: bold;
+      font-size: 20px;
+   }
+</style>
+import axios from "axios";
+
+const consumirApi = async () => {
+   const ids = [1, 4, 5, 26];
+   const data = [];
+   for (const id of ids) {
+      const response = await axios.get(`https://pokeapi.co/api/v2/pokemon/${id}`);
+      data.push({
+         name: response.data.name,
+         img: response.data.sprites.other.dream_world.front_default,
+         id: response.data.id
+      });
+   }
+   return data;
+}
+
+export function getPokemonData() {
+   return consumirApi();
+}
+-----------------------------------------------------------------------------------
+import axios from "axios"
+
+const consumirAPI = async () => {
+   const response = await axios.get('https://randomuser.me/api/');
+   const data = response.data.results[0];
+   
+   return {
+      foto: data.picture.large,
+      titulo: data.name.title,
+      nombre: data.name.first,
+      apellido: data.name.last,
+      email: data.email,
+      genero:data.gender
+   };
+}
+
+export function getUserData() {
+   return consumirAPI();
+}
+<template>
+  <div class="table-container">
+         <table>
+            <thead>
+               <tr>
+                  <th>Titulo</th>
+                  <th>Nombre</th>
+                  <th>Apellido</th>
+                  <th>Email</th>
+                  <th>Genero</th>
+               </tr>
+            </thead>
+            <tbody>
+               <tr v-for="(item, index) in lista" :key="index">
+                  <td>{{ item.titulo  }}</td>
+                  <td>{{ item.nombre }}</td>
+                  <td>{{ item.apellido }}</td>
+                  <td>{{ item.email }}</td>
+                  <td>{{ item.genero }}</td>
+               </tr>
+            </tbody>
+         </table>
+      </div>
+</template>
+
+<script>
+export default {
+   props: ['lista'],
+}
+</script>
+
+<style>
+   .table-container {
+      display: flex;
+      text-align: center;
+      justify-content: center;
+      color: blue;
+      margin: 30px;
+   }
+   table {
+      border-collapse: collapse;
+   }
+   td, th {
+      border: 1px solid blue;
+      padding: 10px 20px;
+   }
+   td {
+      color: rgb(40, 179, 244);
+   }
+</style>
+<template>
+   <div class="form-card">
+      <div class="foto-box">
+         <div class="foto-text">Fotografia</div>
+         <img v-if="candidato.foto" :src="candidato.foto" alt="Foto">
+      </div>
+      <div class="inputs-box">
+         <label>Titulo</label>
+         <input v-model="candidato.titulo">
+
+         <label>Nombre</label>
+         <input v-model="candidato.nombre">
+
+         <label>Apellido</label>
+         <input v-model="candidato.apellido">
+
+         <label>Email (Art 5)</label>
+         <input v-model="candidato.email">
+
+         <label>Genero (Art 6)</label>
+         <input v-model="candidato.genero">
+      </div>
+      
+      <div class="botones">
+         <button @click="buscar">Buscar</button>
+         <button @click="agregar">Agregar</button>
+      </div>
+   </div>
+
+</template>
+
+<script>
+import { getUserData } from '../clients/UserClient';
+
+export default {
+   data() {
+      return {
+         candidato: {
+            foto: '',
+            titulo: '',
+            nombre: '',
+            apellido: '',
+            email: '',
+            genero: ''
+         }
+      }
+   },
+   methods: {
+      async buscar() {
+         this.candidato = await getUserData();
+      },
+      agregar() {
+         this.$emit('add-candidate', { ...this.candidato });
+      }
+   },
+}
+</script>
+
+<style>
+   .form-card {
+      border: 1px solid blue;
+      border-radius: 25px;
+      padding: 20px;
+      margin: 50px;
+      color: blue;
+   }
+   .foto-text {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-weight: bold;
+   }
+   .inputs-box {
+      display: flex;
+      flex-direction: column;
+      text-align: justify;
+      padding: 20px;
+      margin: 0 10px;
+   }
+   .foto-box {
+      display: flex;
+      text-align: center;
+      justify-content: space-around;
+   }
+   img {
+      border: 1px solid blue;
+      border-radius: 10px;
+   }
+   input {
+      margin-bottom: 10px;
+      padding: 5px;
+      border: 1px solid blue;
+      border-radius: 5px;
+   }
+</style>
+<template>
+   <div class="main-container">
+      <div v-if="!mostrarResultado">
+         <div class="stats">
+            <h2>Puntaje: {{ puntaje }}</h2>
+            <h2>intento: {{ intentos }}</h2>
+         </div>
+         <div class="grid">
+            <CasinoCard 
+               v-for="(item, index) in grid" 
+               :key="index"
+               :imagen="item.imagen"
+               :texto="item.texto" 
+            />
+         </div>
+         <button @click="jugar" class="btn-jugar">JUGAR</button>
+      </div>
+      <div v-else class="resultado-final">
+         <div v-if="esGanador === false" class="mensaje rojo">
+            <h2>Has utilizado tus 5 intentos</h2>
+            <h3>El juego ha terminado, intentalo nuevamente</h3>
+         </div>
+         <div v-if="esGanador === true" class="mensaje azul">
+            <h2>Puntaje: {{ puntaje }}</h2>
+            <h3>Felicitaciones has ganado un premio de $10.000,00</h3>
+         </div>
+
+         <button @click="reiniciar" class="btn-reset">Nuevo Juego</button>
+      </div>
+   </div>
+</template>
+
+<script>
+import { getData } from '../clients/CasinoClient';
+import CasinoCard from '../components/CasinoCard.vue';
+
+export default {
+   components: { CasinoCard },
+   data() {
+      return {
+         puntaje: 0,
+         intentos: 0,
+         grid: [],
+         mostrarResultado: false,
+         esGanador: false
+      }
+   },
+   methods: {
+      setInicio() {
+         this.grid = [
+            { imagen: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/dream-world/1.svg', texto: 'XXXXXXXX' }, 
+            { imagen: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/dream-world/1.svg', texto: 'XXXXXXXX' },
+            { imagen: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/dream-world/1.svg', texto: 'XXXXXXXX' }
+         ]
+      },
+      async jugar() {
+         this.intentos++;
+         const nuevaGrilla = [];
+         let contadorYes = 0;
+
+         for (let i = 0; i < 3; i++) {
+            const data = await getData();
+            if (data.answer === 'yes') {
+               contadorYes++;
+            }
+            nuevaGrilla.push({
+               imagen: data.image,
+               texto: data.answer
+            });
+         }
+
+         this.grid = nuevaGrilla;
+
+         if (contadorYes === 3) this.puntaje += 5;
+         else if (contadorYes === 2) this.puntaje += 2;
+         else if (contadorYes === 1) this.puntaje += 1;
+         else this.puntaje += 0;
+
+         this.verificarEstado();
+      },
+      verificarEstado() {
+         if (this.puntaje >= 10) {
+            this.esGanador = true;
+            this.mostrarResultado = true;
+         }
+         else if (this.intentos >= 5) {
+            this.esGanador = false;
+            this.mostrarResultado = true;
+         }
+      },
+      reiniciar() {
+         this.puntaje = 0;
+         this.intentos = 0;
+         this.mostrarResultado = false;
+         this.esGanador = false;
+         this.setInicio();
+      }
+   },
+   mounted() {
+      this.setInicio();
+   },
+}
+</script>
+
+<style>
+   .main-container {
+      text-align: center;
+   }
+   .rojo {
+      color: red;
+   }
+   .azul {
+      color: blue;
+   }
+   .mensaje {
+      border: 1px solid black;
+      padding: 20px;
+      margin: 20px auto;
+      width: 50%;
+
+   }
+   .grid {
+      display: flex;
+      flex-direction: row;
+      text-align: center;
+      justify-content: center;
+      gap: 30px;
+   }
+   .stats {
+      display: flex;
+      justify-content: space-around;
+   }
+</style>
+--------------------------------------------------------------
+<template>
+   <div class="main-container">
+      <div v-if="!mostrarResultado">
+         <div class="stats">
+            <h2>Puntaje: {{ puntaje }}</h2>
+            <h2>intento: {{ intentos }}</h2>
+         </div>
+         <div class="grid">
+            <CasinoCard 
+               v-for="(item, index) in grid" 
+               :key="index"
+               :imagen="item.imagen"
+               :texto="item.texto" 
+            />
+         </div>
+         <button @click="jugar" class="btn-jugar">JUGAR</button>
+      </div>
+      <div v-else class="resultado-final">
+         <div v-if="esGanador === false" class="mensaje rojo">
+            <h2>Has utilizado tus 5 intentos</h2>
+            <h3>El juego ha terminado, intentalo nuevamente</h3>
+         </div>
+         <div v-if="esGanador === true" class="mensaje azul">
+            <h2>Puntaje: {{ puntaje }}</h2>
+            <h3>Felicitaciones has ganado un premio de $10.000,00</h3>
+         </div>
+
+         <button @click="reiniciar" class="btn-reset">Nuevo Juego</button>
+      </div>
+   </div>
+</template>
+
+<script>
+import { getData } from '../clients/CasinoClient';
+import CasinoCard from '../components/CasinoCard.vue';
+
+export default {
+   components: { CasinoCard },
+   data() {
+      return {
+         puntaje: 0,
+         intentos: 0,
+         grid: [],
+         mostrarResultado: false,
+         esGanador: false
+      }
+   },
+   methods: {
+      setInicio() {
+         this.grid = [
+            { imagen: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/dream-world/1.svg', texto: 'XXXXXXXX' }, 
+            { imagen: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/dream-world/1.svg', texto: 'XXXXXXXX' },
+            { imagen: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/dream-world/1.svg', texto: 'XXXXXXXX' }
+         ]
+      },
+      async jugar() {
+         this.intentos++;
+         const nuevaGrilla = [];
+         let contadorYes = 0;
+
+         for (let i = 0; i < 3; i++) {
+            const data = await getData();
+            if (data.answer === 'yes') {
+               contadorYes++;
+            }
+            nuevaGrilla.push({
+               imagen: data.image,
+               texto: data.answer
+            });
+         }
+
+         this.grid = nuevaGrilla;
+
+         if (contadorYes === 3) this.puntaje += 5;
+         else if (contadorYes === 2) this.puntaje += 2;
+         else if (contadorYes === 1) this.puntaje += 1;
+         else this.puntaje += 0;
+
+         this.verificarEstado();
+      },
+      verificarEstado() {
+         if (this.puntaje >= 10) {
+            this.esGanador = true;
+            this.mostrarResultado = true;
+         }
+         else if (this.intentos >= 5) {
+            this.esGanador = false;
+            this.mostrarResultado = true;
+         }
+      },
+      reiniciar() {
+         this.puntaje = 0;
+         this.intentos = 0;
+         this.mostrarResultado = false;
+         this.esGanador = false;
+         this.setInicio();
+      }
+   },
+   mounted() {
+      this.setInicio();
+   },
+}
+</script>
+
+<style>
+   .main-container {
+      text-align: center;
+   }
+   .rojo {
+      color: red;
+   }
+   .azul {
+      color: blue;
+   }
+   .mensaje {
+      border: 1px solid black;
+      padding: 20px;
+      margin: 20px auto;
+      width: 50%;
+
+   }
+   .grid {
+      display: flex;
+      flex-direction: row;
+      text-align: center;
+      justify-content: center;
+      gap: 30px;
+   }
+   .stats {
+      display: flex;
+      justify-content: space-around;
+   }
+</style>
+<template>
+   <div class="card">
+      <img :src="imagen" alt="casino">
+      <p>{{ texto }}</p>
+   </div>
+</template>
+
+<script>
+export default {
+   props: ['imagen', 'texto']
+}
+</script>
+
+<style>
+   img {
+      width: 100px;
+      height: 100px;
+   }
+</style>
